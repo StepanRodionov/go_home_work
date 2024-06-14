@@ -5,6 +5,7 @@ import (
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
+var ErrNoWorkers = errors.New("no workers available")
 
 type Task func() error
 
@@ -15,12 +16,15 @@ func Run(tasks []Task, n, m int) error {
 	errs := 0
 	taskLen := len(tasks)
 	tasksChan := make(chan int, n)
+	if n <= 0 {
+		return ErrNoWorkers
+	}
 	for {
 		if i >= taskLen {
 			break
 		}
 		if activeJobs < n {
-			if errs >= m {
+			if m > 0 && errs >= m {
 				return ErrErrorsLimitExceeded
 			}
 			task := tasks[i]
