@@ -16,32 +16,39 @@ func Run(tasks []Task, n, m int) error {
 	errs := 0
 	taskLen := len(tasks)
 	tasksChan := make(chan int, n)
+	isEnding := false
 	if n <= 0 {
 		return ErrNoWorkers
 	}
 	for {
-		if i >= taskLen {
+		if i >= taskLen && activeJobs == 0 {
 			break
 		}
-		if activeJobs < n {
-			if m > 0 && errs >= m {
-				return ErrErrorsLimitExceeded
-			}
-			task := tasks[i]
-			go func() {
-				defer func() {
-					tasksChan <- 0
-				}()
-				err := doOneJob(task)
-				if err != nil {
-					errs++
+		if i < taskLen {
+			if activeJobs < n {
+				if m > 0 && errs >= m {
+					return ErrErrorsLimitExceeded
 				}
-			}()
-			activeJobs++
-			i++
+				task := tasks[i]
+				go func() {
+					defer func() {
+						tasksChan <- 0
+					}()
+					err := doOneJob(task)
+					if err != nil {
+						errs++
+					}
+				}()
+				activeJobs++
+				i++
+			}
+		} else {
+			isEnding = true
 		}
-		<-tasksChan
-		activeJobs--
+		if activeJobs >= n || isEnding {
+			<-tasksChan
+			activeJobs--
+		}
 	}
 	return nil
 }
