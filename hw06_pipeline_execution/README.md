@@ -23,6 +23,14 @@ func Stage(in <-chan interface{}) (out <-chan interface{}) {
 
 **Нельзя менять сигнатуры исходных функций.**
 
+type (
+In  = <-chan interface{}
+Out = In
+Bi  = chan interface{}
+)
+
+type Stage func(in In) (out Out)
+
 Для большего понимания см. тесты.
 
 ### Критерии оценки
